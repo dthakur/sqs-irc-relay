@@ -4,6 +4,7 @@ import json
 import boto.sqs
 import itertools
 
+from format import *
 from irc.bot import ServerSpec, SingleServerIRCBot
 from functools import partial
 from boto.sqs.message import RawMessage
@@ -61,7 +62,8 @@ class IrcLogger(SingleServerIRCBot):
         name = body['name']
         d = body['data']
 
-        d = ', '.join('%s=%s' % (key, val) for (key, val) in d.iteritems())
+        items = ['%s=%s' % (k, bold(v if v is not None else 'None')) for (k, v) in d.iteritems()]
+        d = ', '.join(items)
 
         self.connection.privmsg('#' + name, d)
         self.connection.privmsg('#all', d)
