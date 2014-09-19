@@ -4,8 +4,10 @@ import json
 import boto.sqs
 import itertools
 
+from datetime import datetime, timedelta
 from format import *
 from irc.bot import ServerSpec, SingleServerIRCBot
+from irc import schedule
 from functools import partial
 from boto.sqs.message import RawMessage
 from secrets import SQS_KEY, SQS_SECRET
@@ -31,19 +33,13 @@ class IrcLogger(SingleServerIRCBot):
         for c in CHANNELS:
             connection.join('#' + c)
 
-        # race with on_join
-        self.run_sqs_loop()
+        self.ircobj.execute_every(timedelta(seconds=2), function=self.sqs_poll)
 
     def on_disconnect(self, connection, event):
         raise Exception('disconnected from irc')
 
     def on_join(self, connection, event):
         logging.info('joined irc channel=%s', event.target)
-
-    def run_sqs_loop(self):
-        while True:
-            self.sqs_poll()
-            time.sleep(1)
 
     def sqs_poll(self):
         rs = self.queue.get_messages(
